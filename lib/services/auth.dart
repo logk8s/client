@@ -6,17 +6,18 @@ import 'package:logk8s/services/database.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isSignedIn = false;
+  String uid = "";
 
-  AuthService(){
-    _auth
-      .userChanges()
-      .listen((User? user) {
-        if (user == null) {
-          _isSignedIn = false;
-        } else {
-          _isSignedIn = true;
-        }
-      });
+  AuthService() {
+    _auth.userChanges().listen((User? user) {
+      if (user == null) {
+        uid = '';
+        _isSignedIn = false;
+      } else {
+        uid = user.uid;
+        _isSignedIn = true;
+      }
+    });
   }
   Logk8sUser _createUser(User? firebaseUser) {
     if (firebaseUser != null) {
@@ -27,6 +28,10 @@ class AuthService {
 
   Stream<Logk8sUser> get user {
     return _auth.authStateChanges().map(_createUser);
+  }
+
+  String get userId {
+    return _auth.currentUser!.uid;
   }
 
   // anon sign in

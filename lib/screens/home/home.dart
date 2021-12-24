@@ -1,11 +1,11 @@
 //https://stackoverflow.com/a/43486389
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:logk8s/models/log_line.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:socket_io_client/socket_io_client.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 const maxLinesInMem = 100;
 const msg =
@@ -21,15 +21,21 @@ class Home extends StatefulWidget {
 class HomeState extends State<Home> {
   Queue<LogLine> lines = Queue<LogLine>();
   final AuthService _authService = AuthService();
-  Socket socket;
+  late final Socket socket;
 
-  // final channel = WebSocketChannel.connect(
-  //   //Uri.parse('wss://echo.websocket.org'),
-  //   Uri.parse('ws://localhost:3000')
-  // );
+  HomeState() {
+    //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
+    socket = io(
+        'ws://localhost:3000',
+        OptionBuilder()
+            .setExtraHeaders({'Authorization': _authService.userId}).build());
 
-  HomeState() : socket = io('ws://localhost:3000') {
-    socket.on('message', (data) => debugPrint(data));
+    socket.on('logline', (data) {
+      debugPrint(data);
+      final ll = LogLine.fromJson(json.decode(data));
+      addLogLine(ll);
+    });
+    // final body = json.decode(response.body);
 
     for (var i = 0; i < 100; i++) {
       lines.add(LogLine(
@@ -42,11 +48,6 @@ class HomeState extends State<Home> {
           level: "debug",
           line: msg));
     }
-
-    //socket.on('msgToClient', (_) => debugPrint(_));
-    // channel.stream.listen((event) {
-    //   debugPrint("HI");
-    // });
   }
 
   @override
@@ -54,6 +55,27 @@ class HomeState extends State<Home> {
     // channel.sink.close();
     super.dispose();
   }
+
+  addLogLine(LogLine logLine) {
+    debugPrint('Function on Click Event Called.');
+    // Put your code here, which you want to execute on onPress event.
+    setState(() {
+      lines.add(logLine);
+      if (lines.length > maxLinesInMem) {
+        lines.removeFirst();
+      }
+      // channel.sink.add('received!');
+    });
+    _scrollController.animateTo(
+      0.0,
+      curve: Curves.easeOut,
+      duration: const Duration(milliseconds: 300),
+    );
+    //TODO: Send acknollegment
+    //socket.emit('acknoledge', logLine.timestamp);
+
+  }
+
 
   generateAndAddLine() {
     debugPrint('Function on Click Event Called.');
@@ -86,11 +108,7 @@ class HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
-
-    /*24 is for notification bar on Android*/
-    final double itemHeight = (size.height - kToolbarHeight - 24) / 2;
-    final double itemWidth = size.width / 2;
+    double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
         backgroundColor: Colors.brown[50],
@@ -133,6 +151,7 @@ class HomeState extends State<Home> {
               Expanded(
                   flex: 20,
                   child: Container(
+                    width: MediaQuery.of(context).size.width,
                     color: Colors.brown[50],
                     child: SingleChildScrollView(
                         scrollDirection: Axis.vertical,
@@ -212,34 +231,41 @@ class LogLineItem extends StatelessWidget {
     TextSpan direct = TextSpan(text: '->', style: stdStyle(context));
     TextSpan dash = TextSpan(text: ' - ', style: stdStyle(context));
 
-    return Column(
-      children: [
-        RichText(
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          text: TextSpan(
-            //text: 'Hello', // default text style
-            children: <TextSpan>[
-              timestamp,
-              semicolon,
-              level,
-              space,
-              cluster,
-              direct,
-              namespace,
-              direct,
-              pod,
-              openSegment,
-              ip,
-              semicolonNs,
-              port,
-              closeSegment,
-              dash,
-              theLine
-            ],
-          ),
-        ),
-      ],
+    return Container(
+      constraints: const BoxConstraints(minWidth: double.infinity),
+      child:
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Column(
+          children: [
+            RichText(
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              text: TextSpan(
+                //text: 'Hello', // default text style
+                children: <TextSpan>[
+                  timestamp,
+                  semicolon,
+                  level,
+                  space,
+                  cluster,
+                  direct,
+                  namespace,
+                  direct,
+                  pod,
+                  openSegment,
+                  ip,
+                  semicolonNs,
+                  port,
+                  closeSegment,
+                  dash,
+                  theLine
+                ],
+              ),
+            ),
+          ],
+        )
+      )
     );
   }
 }
