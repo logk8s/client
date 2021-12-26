@@ -31,7 +31,7 @@ class HomeState extends State<Home> {
             .setExtraHeaders({'Authorization': _authService.userId}).build());
 
     socket.on('logline', (data) {
-      debugPrint(data);
+      //debugPrint(data);
       final ll = LogLine.fromJson(json.decode(data));
       addLogLine(ll);
     });
@@ -57,7 +57,6 @@ class HomeState extends State<Home> {
   }
 
   addLogLine(LogLine logLine) {
-    debugPrint('Function on Click Event Called.');
     // Put your code here, which you want to execute on onPress event.
     setState(() {
       lines.add(logLine);
