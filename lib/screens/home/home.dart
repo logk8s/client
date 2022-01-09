@@ -72,9 +72,7 @@ class HomeState extends State<Home> {
     );
     //TODO: Send acknollegment
     //socket.emit('acknoledge', logLine.timestamp);
-
   }
-
 
   generateAndAddLine() {
     debugPrint('Function on Click Event Called.');
@@ -229,43 +227,39 @@ class LogLineItem extends StatelessWidget {
     TextSpan space = TextSpan(text: '  ', style: stdStyle(context));
     TextSpan direct = TextSpan(text: '->', style: stdStyle(context));
     TextSpan dash = TextSpan(text: ' - ', style: stdStyle(context));
+    var children = <TextSpan>[
+      timestamp,
+      semicolon,
+      level,
+      space,
+      cluster,
+      direct,
+      namespace,
+      direct,
+      pod
+    ];
+    if (logLine.ip != "" && logLine.port != 0) {
+      children.addAll([openSegment, ip, semicolonNs, port, closeSegment]);
+    }
+      children.addAll([dash, theLine]);
+
 
     return Container(
-      constraints: const BoxConstraints(minWidth: double.infinity),
-      child:
-      Align(
-        alignment: Alignment.centerLeft,
-        child: Column(
-          children: [
-            RichText(
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              text: TextSpan(
-                //text: 'Hello', // default text style
-                children: <TextSpan>[
-                  timestamp,
-                  semicolon,
-                  level,
-                  space,
-                  cluster,
-                  direct,
-                  namespace,
-                  direct,
-                  pod,
-                  openSegment,
-                  ip,
-                  semicolonNs,
-                  port,
-                  closeSegment,
-                  dash,
-                  theLine
-                ],
-              ),
-            ),
-          ],
-        )
-      )
-    );
+        constraints: const BoxConstraints(minWidth: double.infinity),
+        child: Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              children: [
+                RichText(
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  text: TextSpan(
+                    //text: 'Hello', // default text style
+                    children: children,
+                  ),
+                ),
+              ],
+            )));
   }
 }
 
