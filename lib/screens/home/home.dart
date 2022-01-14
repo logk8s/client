@@ -22,6 +22,10 @@ class HomeState extends State<Home> {
   Queue<LogLine> lines = Queue<LogLine>();
   final AuthService _authService = AuthService();
   late final Socket socket;
+  dynamic k8sStructure;
+  String namespace = "";
+  List<String> namespaces = [];
+  Map<String, List<String>> pods = {};
 
   HomeState() {
     //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
@@ -35,19 +39,28 @@ class HomeState extends State<Home> {
       final ll = LogLine.fromJson(json.decode(data));
       addLogLine(ll);
     });
-    // final body = json.decode(response.body);
 
-    for (var i = 0; i < 100; i++) {
-      lines.add(LogLine(
-          cluster: "cluster1",
-          timestamp: DateTime.now().microsecondsSinceEpoch,
-          namespace: "namespace",
-          pod: "pod" + i.toString(),
-          ip: "0.0.0.0",
-          port: 27001,
-          level: "debug",
-          line: msg));
-    }
+    socket.on('structure', (data) {
+      setState(() {
+        k8sStructure = json.encode(data);
+        data['namespaces'].forEach((k, v) {
+          namespaces.add(k);
+          debugPrint(json.encode(k));
+        });
+      });
+    });
+
+    // for (var i = 0; i < 100; i++) {
+    //   lines.add(LogLine(
+    //       cluster: "cluster1",
+    //       timestamp: DateTime.now().microsecondsSinceEpoch,
+    //       namespace: "namespace",
+    //       pod: "pod" + i.toString(),
+    //       ip: "0.0.0.0",
+    //       port: 27001,
+    //       level: "debug",
+    //       line: msg));
+    // }
   }
 
   @override
@@ -63,7 +76,6 @@ class HomeState extends State<Home> {
       if (lines.length > maxLinesInMem) {
         lines.removeFirst();
       }
-      // channel.sink.add('received!');
     });
     _scrollController.animateTo(
       0.0,
@@ -101,11 +113,70 @@ class HomeState extends State<Home> {
     );
   }
 
+  structure() {
+    socket.emit('structure', json.encode({'subject': 'structure'}));
+  }
+
+  listen() {
+    socket.emit('structure', json.encode({'subject': 'listen'}));
+  }
+
   final ScrollController _scrollController = ScrollController();
+
+  namespaceSelected(String? value) {
+    debugPrint('namespaceSelected: ' + value!);
+    setState(() {
+      namespace = value;
+    });
+  }
+
+  Widget namespacesDropdown(
+      BuildContext context, Function(String?) namespaceSelected) {
+    var mamespacesDropdown = DropdownButton<String>(
+      items: namespaces.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (_value) => namespaceSelected(_value),
+      icon: const Icon(Icons.arrow_drop_down),
+      elevation: 16,
+      style: const TextStyle(color: Colors.brown),
+      underline: Container(
+        height: 2,
+        color: Colors.brown[50],
+      ),
+      hint: const Text("Select Namespace"),
+    );
+
+    if(namespace != "") {
+      mamespacesDropdown = DropdownButton<String>(
+        items: namespaces.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (_value) => namespaceSelected(_value),
+        value: namespace,
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Namespace"),
+      );
+    }
+
+    return mamespacesDropdown;
+  }
 
   @override
   Widget build(BuildContext context) {
-    double width = MediaQuery.of(context).size.width;
+    // double width = MediaQuery.of(context).size.width;
 
     return Scaffold(
         backgroundColor: Colors.brown[50],
@@ -144,7 +215,17 @@ class HomeState extends State<Home> {
               //         return Text(snapshot.hasData ? '${snapshot.data}' : '');
               //       }
               //     )),
-              Expanded(flex: 2, child: Container(color: Colors.brown[100])),
+              Expanded(
+                  flex: 2,
+                  child: Container(
+                    color: Colors.brown[100],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        namespacesDropdown(context, namespaceSelected)
+                      ],
+                    ),
+                  )),
               Expanded(
                   flex: 20,
                   child: Container(
@@ -168,12 +249,20 @@ class HomeState extends State<Home> {
                 child: Container(
                     color: Colors.brown[100],
                     child: Center(
-                        child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                        child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
                           child: const Text(" Add Log Line "),
                           onPressed: generateAndAddLine,
+                        ),
+                        ElevatedButton(
+                          child: const Text(" Structure "),
+                          onPressed: structure,
+                        ),
+                        ElevatedButton(
+                          child: const Text(" Listen "),
+                          onPressed: listen,
                         )
                       ],
                     ))),
@@ -241,8 +330,7 @@ class LogLineItem extends StatelessWidget {
     if (logLine.ip != "" && logLine.port != 0) {
       children.addAll([openSegment, ip, semicolonNs, port, closeSegment]);
     }
-      children.addAll([dash, theLine]);
-
+    children.addAll([dash, theLine]);
 
     return Container(
         constraints: const BoxConstraints(minWidth: double.infinity),
@@ -254,7 +342,6 @@ class LogLineItem extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   text: TextSpan(
-                    //text: 'Hello', // default text style
                     children: children,
                   ),
                 ),

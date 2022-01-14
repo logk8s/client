@@ -48,6 +48,7 @@ class _AppState extends State<App> {
               initialData: Logk8sUser(""),
               child: MaterialApp(
                 title: 'LogK8S',
+                debugShowCheckedModeBanner: false,
                 theme: ThemeData(
                   // This is the theme of your application.
                   //
