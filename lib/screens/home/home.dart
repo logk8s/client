@@ -24,8 +24,11 @@ class HomeState extends State<Home> {
   late final Socket socket;
   dynamic k8sStructure;
   String namespace = "";
+  String pod = "";
+  String container = "";
   List<String> namespaces = [];
-  Map<String, List<String>> pods = {};
+  Map<String, List<String>> namespace2pods = {};
+  Map<String, List<String>> pod2Containers = {};
 
   HomeState() {
     //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
@@ -43,9 +46,28 @@ class HomeState extends State<Home> {
     socket.on('structure', (data) {
       setState(() {
         k8sStructure = json.encode(data);
+        namespaces = [];
+        namespace2pods = {};
         data['namespaces'].forEach((k, v) {
           namespaces.add(k);
           debugPrint(json.encode(k));
+        });
+        data['namespace2podNames'].forEach((ns, pd) {
+          if (!namespace2pods.containsKey(ns)) {
+            namespace2pods[ns] = [];
+          }
+          pd.forEach((podName) {
+            namespace2pods[ns]!.add(podName);
+          });
+        });
+        data["podContainers"].forEach((pod, containers) {
+          if (!pod2Containers.containsKey(pod)) {
+            pod2Containers[pod] = [];
+          }
+          containers.forEach((containerName) {
+            pod2Containers[pod]!.add(containerName);
+          });
+
         });
       });
     });
@@ -127,6 +149,21 @@ class HomeState extends State<Home> {
     debugPrint('namespaceSelected: ' + value!);
     setState(() {
       namespace = value;
+      pod = "";
+    });
+  }
+
+  podSelected(String? value) {
+    debugPrint('podSelected: ' + value!);
+    setState(() {
+      pod = value;
+      container = "";
+    });
+  }
+  containerSelected(String? value) {
+    debugPrint('containerSelected: ' + value!);
+    setState(() {
+      container = value;
     });
   }
 
@@ -150,7 +187,7 @@ class HomeState extends State<Home> {
       hint: const Text("Select Namespace"),
     );
 
-    if(namespace != "") {
+    if (namespace != "") {
       mamespacesDropdown = DropdownButton<String>(
         items: namespaces.map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
@@ -170,8 +207,129 @@ class HomeState extends State<Home> {
         hint: const Text("Select Namespace"),
       );
     }
-
     return mamespacesDropdown;
+  }
+
+  Widget podsDropdown(BuildContext context, Function(String?) podSelected) {
+    if (namespace == "") {
+      return DropdownButton<String>(
+        items: <String>[].map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (_value) => podSelected(_value),
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Pod"),
+      );
+    }
+    if (pod == "") {
+      return DropdownButton<String>(
+        items: namespace2pods[namespace]!
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (_value) => podSelected(_value),
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Pod"),
+      );
+    }
+    return DropdownButton<String>(
+      items: namespace2pods[namespace]!
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (_value) => podSelected(_value),
+      value: pod,
+      icon: const Icon(Icons.arrow_drop_down),
+      elevation: 16,
+      style: const TextStyle(color: Colors.brown),
+      underline: Container(
+        height: 2,
+        color: Colors.brown[50],
+      ),
+      hint: const Text("Select Pod"),
+    );
+  }
+
+  Widget containerssDropdown(BuildContext context, Function(String?) containerSelected) {
+    if (pod == "") {
+      return DropdownButton<String>(
+        items: <String>[].map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (_value) => containerSelected(_value),
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Container"),
+      );
+    }
+    if (container == "") {
+      return DropdownButton<String>(
+        items: pod2Containers[pod]!
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        onChanged: (_value) => containerSelected(_value),
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Pod"),
+      );
+    }
+    return DropdownButton<String>(
+      items: pod2Containers[pod]!
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (_value) => containerSelected(_value),
+      value: container,
+      icon: const Icon(Icons.arrow_drop_down),
+      elevation: 16,
+      style: const TextStyle(color: Colors.brown),
+      underline: Container(
+        height: 2,
+        color: Colors.brown[50],
+      ),
+      hint: const Text("Select Pod"),
+    );
   }
 
   @override
@@ -222,7 +380,9 @@ class HomeState extends State<Home> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        namespacesDropdown(context, namespaceSelected)
+                        namespacesDropdown(context, namespaceSelected),
+                        podsDropdown(context, podSelected),
+                        containerssDropdown(context, containerSelected),
                       ],
                     ),
                   )),
