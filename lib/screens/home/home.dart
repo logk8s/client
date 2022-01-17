@@ -4,6 +4,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:logk8s/models/log_line.dart';
+import 'package:logk8s/models/selected_listener.dart';
+import 'package:logk8s/models/selected_listeners.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -27,8 +29,10 @@ class HomeState extends State<Home> {
   String pod = "";
   String container = "";
   List<String> namespaces = [];
+  List<String> selectedNamespases = [];
   Map<String, List<String>> namespace2pods = {};
   Map<String, List<String>> pod2Containers = {};
+  SelectedListeners listens = SelectedListeners();
 
   HomeState() {
     //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
@@ -41,6 +45,29 @@ class HomeState extends State<Home> {
       //debugPrint(data);
       final ll = LogLine.fromJson(json.decode(data));
       addLogLine(ll);
+    });
+
+    socket.on('connect', (data) {
+      debugPrint('connect');
+      setState(() {
+          namespace = "";
+          pod = "";
+          container = "";
+      });
+    });
+
+    socket.on("disconnect", (reason) {
+      debugPrint('disconnect reason ' + reason);
+      setState(() {
+          namespace = "";
+          pod = "";
+          container = "";
+      });
+    });
+
+    socket.on('connected', (data) {
+      debugPrint('connected as ' + data);
+      structure();
     });
 
     socket.on('structure', (data) {
@@ -67,7 +94,6 @@ class HomeState extends State<Home> {
           containers.forEach((containerName) {
             pod2Containers[pod]!.add(containerName);
           });
-
         });
       });
     });
@@ -143,6 +169,16 @@ class HomeState extends State<Home> {
     socket.emit('structure', json.encode({'subject': 'listen'}));
   }
 
+  addListener() {
+    var listener =
+        SelectedListener(namespace: namespace, pod: pod, container: container);
+    debugPrint('addListener - ' +
+        json.encode({'subject': 'listen', 'listener': listener}));
+    listens.addSelectedListener(listener);
+    socket.emit(
+        'structure', json.encode({'subject': 'listen', 'listener': listener}));
+  }
+
   final ScrollController _scrollController = ScrollController();
 
   namespaceSelected(String? value) {
@@ -160,6 +196,7 @@ class HomeState extends State<Home> {
       container = "";
     });
   }
+
   containerSelected(String? value) {
     debugPrint('containerSelected: ' + value!);
     setState(() {
@@ -169,6 +206,16 @@ class HomeState extends State<Home> {
 
   Widget namespacesDropdown(
       BuildContext context, Function(String?) namespaceSelected) {
+    // return DropDownMultiSelect(
+    //   onChanged: (List<String> x) {
+    //     setState(() {
+    //       selectedNamespases = x;
+    //     });
+    //   },
+    //   options: namespaces,
+    //   selectedValues: selectedNamespases,
+    //   whenEmpty: 'Select Namespaces',
+    // );
     var mamespacesDropdown = DropdownButton<String>(
       items: namespaces.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
@@ -271,7 +318,8 @@ class HomeState extends State<Home> {
     );
   }
 
-  Widget containerssDropdown(BuildContext context, Function(String?) containerSelected) {
+  Widget containerssDropdown(
+      BuildContext context, Function(String?) containerSelected) {
     if (pod == "") {
       return DropdownButton<String>(
         items: <String>[].map<DropdownMenuItem<String>>((String value) {
@@ -293,8 +341,8 @@ class HomeState extends State<Home> {
     }
     if (container == "") {
       return DropdownButton<String>(
-        items: pod2Containers[pod]!
-            .map<DropdownMenuItem<String>>((String value) {
+        items:
+            pod2Containers[pod]!.map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
             child: Text(value),
@@ -312,8 +360,7 @@ class HomeState extends State<Home> {
       );
     }
     return DropdownButton<String>(
-      items: pod2Containers[pod]!
-          .map<DropdownMenuItem<String>>((String value) {
+      items: pod2Containers[pod]!.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
           value: value,
           child: Text(value),
@@ -383,6 +430,10 @@ class HomeState extends State<Home> {
                         namespacesDropdown(context, namespaceSelected),
                         podsDropdown(context, podSelected),
                         containerssDropdown(context, containerSelected),
+                        ElevatedButton(
+                          child: const Text(" Listen "),
+                          onPressed: addListener,
+                        ),
                       ],
                     ),
                   )),
@@ -423,7 +474,23 @@ class HomeState extends State<Home> {
                         ElevatedButton(
                           child: const Text(" Listen "),
                           onPressed: listen,
-                        )
+                        ),
+                        //TODO: #1 Multiselect, use multi_select_flutter or DropDownMultiSelect
+
+                        // SizedBox(
+                        //   height: 50.0,
+                        //   width: 100.0,
+                        //   child: DropDownMultiSelect(
+                        //     onChanged: (List<String> x) {
+                        //       setState(() {
+                        //         //selected = x;
+                        //       });
+                        //     },
+                        //     options: const ['a', 'b', 'c', 'd'],
+                        //     selectedValues: const ['a'],
+                        //     whenEmpty: 'Select Something',
+                        //   ),
+                        // )
                       ],
                     ))),
               )
