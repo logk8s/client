@@ -50,18 +50,14 @@ class HomeState extends State<Home> {
     socket.on('connect', (data) {
       debugPrint('connect');
       setState(() {
-          namespace = "";
-          pod = "";
-          container = "";
+        resetState();
       });
     });
 
     socket.on("disconnect", (reason) {
       debugPrint('disconnect reason ' + reason);
       setState(() {
-          namespace = "";
-          pod = "";
-          container = "";
+        resetState();
       });
     });
 
@@ -111,6 +107,17 @@ class HomeState extends State<Home> {
     // }
   }
 
+  void resetState() {
+    namespace = "";
+    pod = "";
+    container = "";
+    namespaces = [];
+    selectedNamespases = [];
+    namespace2pods = {};
+    pod2Containers = {};
+    listens = SelectedListeners();
+  }
+
   @override
   void dispose() {
     // channel.sink.close();
@@ -130,7 +137,7 @@ class HomeState extends State<Home> {
       curve: Curves.easeOut,
       duration: const Duration(milliseconds: 300),
     );
-    //TODO: Send acknollegment
+    //TODO: Send acknowllegment
     //socket.emit('acknoledge', logLine.timestamp);
   }
 
@@ -172,11 +179,29 @@ class HomeState extends State<Home> {
   addListener() {
     var listener =
         SelectedListener(namespace: namespace, pod: pod, container: container);
-    debugPrint('addListener - ' +
-        json.encode({'subject': 'listen', 'listener': listener}));
-    listens.addSelectedListener(listener);
-    socket.emit(
-        'structure', json.encode({'subject': 'listen', 'listener': listener}));
+    if (listens.contains(listener)) {
+      debugPrint('listener already exist');
+    } else {
+      debugPrint('addListener - ' +
+          json.encode({'subject': 'listen', 'listener': listener}));
+      listens.addSelectedListener(listener);
+      socket.emit('structure',
+          json.encode({'subject': 'listen', 'listener': listener}));
+    }
+  }
+
+  removeListener() {
+    var listener =
+        SelectedListener(namespace: namespace, pod: pod, container: container);
+    if (!listens.contains(listener)) {
+      debugPrint('listener not exist');
+    } else {
+      debugPrint('removeListener - ' +
+          json.encode({'subject': 'listen', 'listener': listener}));
+      listens.removeSelectedListener(listener);
+      socket.emit('structure',
+          json.encode({'subject': 'remove', 'listener': listener}));
+    }
   }
 
   final ScrollController _scrollController = ScrollController();
@@ -430,10 +455,25 @@ class HomeState extends State<Home> {
                         namespacesDropdown(context, namespaceSelected),
                         podsDropdown(context, podSelected),
                         containerssDropdown(context, containerSelected),
-                        ElevatedButton(
-                          child: const Text(" Listen "),
-                          onPressed: addListener,
-                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            IconButton(
+                              iconSize: 42,
+                              color: Colors.brown[400],
+                              icon: const Icon(Icons.post_add),
+                              tooltip:  'Add to track logs',
+                              onPressed: addListener,
+                            ),
+                            IconButton(
+                              iconSize: 36,
+                              color: Colors.brown[400],
+                              icon: const Icon(Icons.delete),
+                              tooltip: "Remove tracking",
+                              onPressed: removeListener,
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   )),

@@ -11,12 +11,23 @@ class SelectedListeners {
   }
 
   List<SelectedListener> addSelectedListener(SelectedListener listener) {
-    listners.add(listener);
+    if(!listners.contains(listener)) {
+      listners.add(listener);
+    }
     return listners;
   }
 
   List<SelectedListener> removeSelectedListener(SelectedListener listener) {
     listners.remove(listener);
     return listners;
+  }
+
+  bool contains(SelectedListener listener) {
+    for (SelectedListener check in listners) {
+      if (check.equals(listener)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

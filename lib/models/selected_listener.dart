@@ -15,11 +15,18 @@ class SelectedListener {
   SelectedListener.fromJson(Map<String, dynamic> json)
       : namespace = json['namespace'],
         pod = json['pod'],
-        container= json['container'];
+        container = json['container'];
 
   Map<String, dynamic> toJson() => {
         'namespace': namespace,
         'pod': pod,
         'container': container,
       };
+
+  bool equals(SelectedListener listener) {
+    if (namespace == listener.namespace &&
+        pod == listener.pod &&
+        container == listener.container) return true;
+    return false;
+  }
 }
