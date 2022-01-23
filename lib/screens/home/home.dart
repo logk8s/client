@@ -158,7 +158,6 @@ class HomeState extends State<Home> {
       if (lines.length > maxLinesInMem) {
         lines.removeFirst();
       }
-      socket.emit('message', 'test');
       // channel.sink.add('received!');
     });
     _scrollController.animateTo(
@@ -172,8 +171,8 @@ class HomeState extends State<Home> {
     socket.emit('structure', json.encode({'subject': 'structure'}));
   }
 
-  listen() {
-    socket.emit('structure', json.encode({'subject': 'listen'}));
+  testMessage() {
+    socket.emit('message', 'test');
   }
 
   addListener() {
@@ -211,6 +210,7 @@ class HomeState extends State<Home> {
     setState(() {
       namespace = value;
       pod = "";
+      container = "";
     });
   }
 
@@ -455,18 +455,18 @@ class HomeState extends State<Home> {
                         namespacesDropdown(context, namespaceSelected),
                         podsDropdown(context, podSelected),
                         containerssDropdown(context, containerSelected),
-                        Column(
+                        Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             IconButton(
-                              iconSize: 42,
+                              //iconSize: 42,
                               color: Colors.brown[400],
                               icon: const Icon(Icons.post_add),
                               tooltip:  'Add to track logs',
                               onPressed: addListener,
                             ),
                             IconButton(
-                              iconSize: 36,
+                              //iconSize: 36,
                               color: Colors.brown[400],
                               icon: const Icon(Icons.delete),
                               tooltip: "Remove tracking",
@@ -512,8 +512,8 @@ class HomeState extends State<Home> {
                           onPressed: structure,
                         ),
                         ElevatedButton(
-                          child: const Text(" Listen "),
-                          onPressed: listen,
+                          child: const Text(" Message "),
+                          onPressed: testMessage,
                         ),
                         //TODO: #1 Multiselect, use multi_select_flutter or DropDownMultiSelect
 
