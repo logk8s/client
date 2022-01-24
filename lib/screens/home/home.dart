@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logk8s/models/log_line.dart';
 import 'package:logk8s/models/selected_listener.dart';
 import 'package:logk8s/models/selected_listeners.dart';
+import 'package:logk8s/screens/settings/preferences/prefrences.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
@@ -231,16 +232,6 @@ class HomeState extends State<Home> {
 
   Widget namespacesDropdown(
       BuildContext context, Function(String?) namespaceSelected) {
-    // return DropDownMultiSelect(
-    //   onChanged: (List<String> x) {
-    //     setState(() {
-    //       selectedNamespases = x;
-    //     });
-    //   },
-    //   options: namespaces,
-    //   selectedValues: selectedNamespases,
-    //   whenEmpty: 'Select Namespaces',
-    // );
     var mamespacesDropdown = DropdownButton<String>(
       items: namespaces.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
@@ -411,7 +402,7 @@ class HomeState extends State<Home> {
     return Scaffold(
         backgroundColor: Colors.brown[50],
         appBar: AppBar(
-          title: const Text('My Account'),
+          title: const Text('Log Viewer'),
           backgroundColor: Colors.brown[400],
           elevation: 0.0,
           actions: <Widget>[
@@ -423,6 +414,21 @@ class HomeState extends State<Home> {
                 },
                 icon: const Icon(Icons.person),
                 label: const Text('Logout'),
+                style: ButtonStyle(
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Colors.white),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: TextButton.icon(
+                onPressed: () async {
+                  Navigator.pushNamed(context, '/prefrences');
+                  //MaterialPageRoute(builder: (context) => const Prefrences());
+                },
+                icon: const Icon(Icons.room_preferences),
+                label: const Text('prefrences'),
                 style: ButtonStyle(
                   foregroundColor:
                       MaterialStateProperty.all<Color>(Colors.white),
@@ -462,7 +468,7 @@ class HomeState extends State<Home> {
                               //iconSize: 42,
                               color: Colors.brown[400],
                               icon: const Icon(Icons.post_add),
-                              tooltip:  'Add to track logs',
+                              tooltip: 'Add to track logs',
                               onPressed: addListener,
                             ),
                             IconButton(

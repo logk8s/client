@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:logk8s/models/logk8s_user.dart';
 import 'package:logk8s/screens/error/error.dart';
 import 'package:logk8s/screens/home/init.dart';
+import 'package:logk8s/screens/settings/preferences/prefrences.dart';
 import 'package:logk8s/screens/wrapper.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:provider/provider.dart';
@@ -61,7 +62,14 @@ class _AppState extends State<App> {
                   // is not restarted.
                   primarySwatch: Colors.brown,
                 ),
-                home: Wrapper(),
+                //home: Wrapper(),
+                initialRoute: '/',
+                routes: {
+                  // When navigating to the "/" route, build the FirstScreen widget.
+                  '/': (context) => Wrapper(),
+                  // When navigating to the "/second" route, build the SecondScreen widget.
+                  '/prefrences': (context) => const Prefrences(),
+                },
               ));
         }
 
