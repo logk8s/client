@@ -407,32 +407,24 @@ class HomeState extends State<Home> {
           elevation: 0.0,
           actions: <Widget>[
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: TextButton.icon(
+              padding: const EdgeInsets.symmetric(horizontal: 1.0),
+              child: IconButton(
                 onPressed: () async {
-                  await _authService.signOut();
+                  //see https://docs.flutter.dev/cookbook/navigation/named-routes
+                  Navigator.pushNamed(context, '/clusters');
                 },
-                icon: const Icon(Icons.person),
-                label: const Text('Logout'),
-                style: ButtonStyle(
-                  foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
-                ),
+                icon: const Icon(Icons.settings),
+                tooltip: 'Prefrences',
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: TextButton.icon(
+              padding: const EdgeInsets.symmetric(horizontal: 1.0),
+              child: IconButton(
                 onPressed: () async {
-                  Navigator.pushNamed(context, '/prefrences');
-                  //MaterialPageRoute(builder: (context) => const Prefrences());
+                  await _authService.signOut();
                 },
-                icon: const Icon(Icons.room_preferences),
-                label: const Text('prefrences'),
-                style: ButtonStyle(
-                  foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
-                ),
+                icon: const Icon(Icons.logout),
+                tooltip: 'Logout',
               ),
             )
           ],

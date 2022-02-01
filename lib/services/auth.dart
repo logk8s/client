@@ -77,4 +77,12 @@ class AuthService {
   bool get isSignedIn {
     return _isSignedIn;
   }
+
+  addCluster() {
+    return true;
+  }
+
+  updateCluster() {
+    return true;
+  }
 }
