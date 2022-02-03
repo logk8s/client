@@ -9,6 +9,11 @@ class AuthService {
   String uid = "";
 
   AuthService() {
+    try {
+      uid = FirebaseAuth.instance.currentUser!.uid;
+    } catch (e) {
+      uid = "";
+    }
     _auth.userChanges().listen((User? user) {
       if (user == null) {
         uid = '';

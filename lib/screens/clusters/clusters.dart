@@ -1,10 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:logk8s/models/logk8s_user.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:logk8s/services/database.dart';
-import 'package:provider/provider.dart';
 
 class Clusters extends StatefulWidget {
   const Clusters({Key? key}) : super(key: key);
@@ -92,14 +92,18 @@ class _ClusterFromDialogState extends State<ClusterFromDialog> {
                       setState(() {
                         loading = true;
                       });
-                      var result = await _authService.updateCluster();
-                      if (result == null) {
-                        setState(() {
+
+                      widget.cluster.uid = _authService.uid;
+                      var docRef = await _db.updateCluster(widget.cluster);
+                      setState(() {
+                        if (docRef == null) {
                           error = 'Failed to register';
-                          loading = false;
-                        });
-                      }
-                      form.reset();
+                          return;
+                        }
+                        loading = false;
+                        widget.cluster.docid = docRef.id;
+                        form.reset();
+                      });
                       Navigator.pop(context);
                     }
                   },
@@ -129,6 +133,39 @@ class _ClusterFromDialogState extends State<ClusterFromDialog> {
   }
 }
 
+class GetUserName extends StatelessWidget {
+  final String documentId;
+
+  GetUserName(this.documentId);
+
+  @override
+  Widget build(BuildContext context) {
+    CollectionReference users = FirebaseFirestore.instance.collection('users');
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: users.doc(documentId).get(),
+      builder:
+          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.hasError) {
+          return Text("Something went wrong");
+        }
+
+        if (snapshot.hasData && !snapshot.data!.exists) {
+          return Text("Document does not exist");
+        }
+
+        if (snapshot.connectionState == ConnectionState.done) {
+          Map<String, dynamic> data =
+              snapshot.data!.data() as Map<String, dynamic>;
+          return Text("Full Name: ${data['full_name']} ${data['last_name']}");
+        }
+
+        return Text("loading");
+      },
+    );
+  }
+}
+
 class ClustersState extends State<Clusters> {
   final AuthService _authService = AuthService();
   final DatabaseService _db = DatabaseService();
@@ -142,17 +179,63 @@ class ClustersState extends State<Clusters> {
   ClustersState() {
     loading = false;
     error = '';
-    // for (int i = 0; i < 10; i++) {
-    //   Cluster newCluster = Cluster();
-    //   newCluster.domain = 'domain' + i.toString();
-    //   newCluster.name = 'name' + i.toString();
-    //   newCluster.port = i + 1000;
-    //   newCluster.secrete = 'secrete' + i.toString();
-    //   clusters.add(newCluster);
-    // }
+    fetchCluster();
   }
 
-  printState() {}
+  //https://petercoding.com/firebase/2020/04/04/using-cloud-firestore-in-flutter/
+  fetchCluster() {
+    var uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference clustersCollection =
+        FirebaseFirestore.instance.collection('clusters');
+    // clustersCollection.where('uid', isEqualTo: uid).get().then((value) => {
+    //       value.docs.forEach((document) {
+    //         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
+    //         setState(() {
+    //           var c = Cluster();
+    //           c.docid = document.id;
+    //           c.uid = data['uid'];
+    //           c.domain = data['domain'];
+    //           c.secrete = data['secrete'];
+    //           c.port = data['port'];
+    //           c.name = data['name'];
+    //        //   clusters.add(c);
+    //         });
+    //       })
+    //     });
+
+    clustersCollection
+        .where("uid", isEqualTo: uid)
+        .snapshots()
+        .listen((result) {
+      result.docChanges.forEach((res) {
+        Map<String, dynamic> data = res.doc.data() as Map<String, dynamic>;
+        var c = Cluster();
+        c.docid = res.doc.id;
+        c.uid = data['uid'];
+        c.domain = data['domain'];
+        c.secrete = data['secrete'];
+        c.port = data['port'];
+        c.name = data['name'];
+        setState(() {
+          if (res.type == DocumentChangeType.added) {
+            clusters.add(c);
+          } else if (res.type == DocumentChangeType.modified) {
+            clusters.forEach((cluster) {
+              if (cluster.docid == c.docid) {
+                cluster.uid = c.uid;
+                cluster.domain = c.domain;
+                cluster.secrete = c.secrete;
+                cluster.port = c.port;
+                cluster.name = c.name;
+              }
+            });
+          } else if (res.type == DocumentChangeType.removed) {
+            clusters.remove(c);
+          }
+        });
+      });
+    });
+  }
 
   navigatePreferences(String to) {
     setState(() {
@@ -252,7 +335,16 @@ class ClustersState extends State<Clusters> {
                               color: Colors.brown[900],
                             ),
                             onPressed: () {
-                              debugPrint('index:' + index.toString());
+                              FirebaseFirestore.instance
+                                  .collection("clusters")
+                                  .doc(clusters[index].docid)
+                                  .delete().then((value) {
+                                    debugPrint('deleted index:' + index.toString());
+                                    setState(() {
+                                      clusters.removeWhere((del) => del.docid == clusters[index].docid);
+                                    });
+                                    }
+                                  );
 
                               //   _onDeleteItemPressed(index);
                             },
@@ -341,8 +433,8 @@ class ClustersState extends State<Clusters> {
                           return;
                         }
                         loading = false;
-                        cluster.docid = docRef.id;
-                        clusters.add(cluster);
+                        // cluster.docid = docRef.id;
+                        // clusters.add(cluster);
                         form.reset();
                       });
                     }

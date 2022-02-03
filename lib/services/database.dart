@@ -33,13 +33,24 @@ class DatabaseService {
     });
   }
 
-  // Future updateCluster(String id, Cluster cluster) async {
-  //   return await clusters.doc(cluster.id).({'userId': uid});
-  // }
+  //see: https://stackoverflow.com/questions/59017373/how-to-update-collection-documents-in-firebase-in-flutter
+  // var collection = FirebaseFirestore.instance.collection('collection');
+  // collection
+  //     .doc('some_id') // <-- Doc ID where data should be updated.
+  //     .update({'key' : 'value'}) // <-- Updated data
+  //     .then((_) => print('Updated'))
+  //     .catchError((error) => print('Update failed: $error'));
+  Future updateCluster(Cluster cluster) async {
+    return await clusters.doc(cluster.docid).update({
+      'uid': cluster.uid,
+      'domain': cluster.domain,
+      'name': cluster.name,
+      'port': cluster.port,
+      'secrete': cluster.secrete,
+    });
+  }
 
   Future getClusters(String name) async {
     return await clusters.add({'userId': uid});
   }
-
-
 }

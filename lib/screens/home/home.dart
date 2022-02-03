@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:logk8s/models/log_line.dart';
 import 'package:logk8s/models/selected_listener.dart';
 import 'package:logk8s/models/selected_listeners.dart';
-import 'package:logk8s/screens/settings/preferences/prefrences.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
