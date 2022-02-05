@@ -32,7 +32,7 @@ class PrefrencesState extends State<Prefrences> {
       newCluster.domain = 'domain' + i.toString();
       newCluster.name = 'name' + i.toString();
       newCluster.port = i + 1000;
-      newCluster.secrete = 'secrete' + i.toString();
+      newCluster.secret = 'secret' + i.toString();
       clusters.add(newCluster);
     }
   }
@@ -200,13 +200,13 @@ class PrefrencesState extends State<Prefrences> {
                     setState(() => cluster.port = int.parse(val!)),
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Secrete'),
+                decoration: const InputDecoration(labelText: 'Secret'),
                 validator: (val) => val!.isEmpty
-                    ? 'Secrete can not be empty'
+                    ? 'Secret can not be empty'
                     : val.length < 3
-                        ? 'Secrete should be at least 3 charecters long'
+                        ? 'Secret should be at least 3 charecters long'
                         : null,
-                onSaved: (val) => setState(() => cluster.secrete = val!),
+                onSaved: (val) => setState(() => cluster.secret = val!),
               ),
               Container(
                 margin: const EdgeInsets.all(10.0),

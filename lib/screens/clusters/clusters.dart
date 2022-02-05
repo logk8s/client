@@ -72,14 +72,14 @@ class _ClusterFromDialogState extends State<ClusterFromDialog> {
                     setState(() => widget.cluster.port = int.parse(val!)),
               ),
               TextFormField(
-                initialValue: widget.cluster.secrete,
-                decoration: const InputDecoration(labelText: 'Secrete'),
+                initialValue: widget.cluster.secret,
+                decoration: const InputDecoration(labelText: 'Secret'),
                 validator: (val) => val!.isEmpty
-                    ? 'Secrete can not be empty'
+                    ? 'Secret can not be empty'
                     : val.length < 3
-                        ? 'Secrete should be at least 3 charecters long'
+                        ? 'Secret should be at least 3 charecters long'
                         : null,
-                onSaved: (val) => setState(() => widget.cluster.secrete = val!),
+                onSaved: (val) => setState(() => widget.cluster.secret = val!),
               ),
               Container(
                 margin: const EdgeInsets.all(10.0),
@@ -133,39 +133,6 @@ class _ClusterFromDialogState extends State<ClusterFromDialog> {
   }
 }
 
-class GetUserName extends StatelessWidget {
-  final String documentId;
-
-  GetUserName(this.documentId);
-
-  @override
-  Widget build(BuildContext context) {
-    CollectionReference users = FirebaseFirestore.instance.collection('users');
-
-    return FutureBuilder<DocumentSnapshot>(
-      future: users.doc(documentId).get(),
-      builder:
-          (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-        if (snapshot.hasError) {
-          return Text("Something went wrong");
-        }
-
-        if (snapshot.hasData && !snapshot.data!.exists) {
-          return Text("Document does not exist");
-        }
-
-        if (snapshot.connectionState == ConnectionState.done) {
-          Map<String, dynamic> data =
-              snapshot.data!.data() as Map<String, dynamic>;
-          return Text("Full Name: ${data['full_name']} ${data['last_name']}");
-        }
-
-        return Text("loading");
-      },
-    );
-  }
-}
-
 class ClustersState extends State<Clusters> {
   final AuthService _authService = AuthService();
   final DatabaseService _db = DatabaseService();
@@ -195,7 +162,7 @@ class ClustersState extends State<Clusters> {
     //           c.docid = document.id;
     //           c.uid = data['uid'];
     //           c.domain = data['domain'];
-    //           c.secrete = data['secrete'];
+    //           c.secret = data['secret'];
     //           c.port = data['port'];
     //           c.name = data['name'];
     //        //   clusters.add(c);
@@ -213,7 +180,7 @@ class ClustersState extends State<Clusters> {
         c.docid = res.doc.id;
         c.uid = data['uid'];
         c.domain = data['domain'];
-        c.secrete = data['secrete'];
+        c.secret = data['secret'];
         c.port = data['port'];
         c.name = data['name'];
         setState(() {
@@ -224,7 +191,7 @@ class ClustersState extends State<Clusters> {
               if (cluster.docid == c.docid) {
                 cluster.uid = c.uid;
                 cluster.domain = c.domain;
-                cluster.secrete = c.secrete;
+                cluster.secret = c.secret;
                 cluster.port = c.port;
                 cluster.name = c.name;
               }
@@ -405,13 +372,13 @@ class ClustersState extends State<Clusters> {
                     setState(() => cluster.port = int.parse(val!)),
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Secrete'),
+                decoration: const InputDecoration(labelText: 'Secret'),
                 validator: (val) => val!.isEmpty
-                    ? 'Secrete can not be empty'
+                    ? 'Secret can not be empty'
                     : val.length < 3
-                        ? 'Secrete should be at least 3 charecters long'
+                        ? 'Secret should be at least 3 charecters long'
                         : null,
-                onSaved: (val) => setState(() => cluster.secrete = val!),
+                onSaved: (val) => setState(() => cluster.secret = val!),
               ),
               Container(
                 margin: const EdgeInsets.all(10.0),

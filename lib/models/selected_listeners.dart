@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:logk8s/models/selected_listener.dart';
 
-
 @immutable
 class SelectedListeners {
   final List<SelectedListener> listners = [];
@@ -11,14 +10,14 @@ class SelectedListeners {
   }
 
   List<SelectedListener> addSelectedListener(SelectedListener listener) {
-    if(!listners.contains(listener)) {
+    if (!listners.contains(listener)) {
       listners.add(listener);
     }
     return listners;
   }
 
   List<SelectedListener> removeSelectedListener(SelectedListener listener) {
-    listners.remove(listener);
+    listners.removeWhere((r) => r.equals(listener));
     return listners;
   }
 

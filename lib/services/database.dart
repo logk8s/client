@@ -29,7 +29,7 @@ class DatabaseService {
       'domain': cluster.domain,
       'name': cluster.name,
       'port': cluster.port,
-      'secrete': cluster.secrete,
+      'secret': cluster.secret,
     });
   }
 
@@ -46,11 +46,7 @@ class DatabaseService {
       'domain': cluster.domain,
       'name': cluster.name,
       'port': cluster.port,
-      'secrete': cluster.secrete,
+      'secret': cluster.secret,
     });
-  }
-
-  Future getClusters(String name) async {
-    return await clusters.add({'userId': uid});
   }
 }

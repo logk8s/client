@@ -2,11 +2,15 @@
 import 'dart:collection';
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:logk8s/models/log_line.dart';
 import 'package:logk8s/models/selected_listener.dart';
 import 'package:logk8s/models/selected_listeners.dart';
+import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
+import 'package:logk8s/services/session.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 const maxLinesInMem = 100;
@@ -33,6 +37,9 @@ class HomeState extends State<Home> {
   Map<String, List<String>> namespace2pods = {};
   Map<String, List<String>> pod2Containers = {};
   SelectedListeners listens = SelectedListeners();
+  Cluster cluster = Cluster();
+  List<Cluster> clusters = [];
+  SessionService sessionService = SessionService();
 
   HomeState() {
     //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
@@ -63,7 +70,6 @@ class HomeState extends State<Home> {
 
     socket.on('connected', (data) {
       debugPrint('connected as ' + data);
-      structure();
     });
 
     socket.on('structure', (data) {
@@ -71,6 +77,7 @@ class HomeState extends State<Home> {
         k8sStructure = json.encode(data);
         namespaces = [];
         namespace2pods = {};
+        pod2Containers = {};
         data['namespaces'].forEach((k, v) {
           namespaces.add(k);
           debugPrint(json.encode(k));
@@ -93,18 +100,40 @@ class HomeState extends State<Home> {
         });
       });
     });
+    fetchClusters();
+    fetchSessions();
+  }
 
-    // for (var i = 0; i < 100; i++) {
-    //   lines.add(LogLine(
-    //       cluster: "cluster1",
-    //       timestamp: DateTime.now().microsecondsSinceEpoch,
-    //       namespace: "namespace",
-    //       pod: "pod" + i.toString(),
-    //       ip: "0.0.0.0",
-    //       port: 27001,
-    //       level: "debug",
-    //       line: msg));
-    // }
+  fetchClusters() async {
+    var uid = FirebaseAuth.instance.currentUser?.uid;
+    CollectionReference clustersCollection =
+        FirebaseFirestore.instance.collection('clusters');
+    await clustersCollection
+        .where('uid', isEqualTo: uid)
+        .get()
+        .then((value) => {
+              value.docs.forEach((document) {
+                Map<String, dynamic> data =
+                    document.data() as Map<String, dynamic>;
+                setState(() {
+                  var c = Cluster();
+                  c.docid = document.id;
+                  c.uid = data['uid'];
+                  c.domain = data['domain'];
+                  c.secret = data['secret'];
+                  c.port = data['port'];
+                  c.name = data['name'];
+                  clusters.add(c);
+                });
+              })
+            });
+  }
+
+  fetchSessions() async {
+    List<LogSession> logSessions = await sessionService.getUserSessions();
+    for(var session in logSessions) {
+      debugPrint(session.name);
+    }
   }
 
   void resetState() {
@@ -116,6 +145,8 @@ class HomeState extends State<Home> {
     namespace2pods = {};
     pod2Containers = {};
     listens = SelectedListeners();
+    cluster = Cluster();
+    clusters = [];
   }
 
   @override
@@ -141,33 +172,21 @@ class HomeState extends State<Home> {
     //socket.emit('acknoledge', logLine.timestamp);
   }
 
-  generateAndAddLine() {
-    debugPrint('Function on Click Event Called.');
-    // Put your code here, which you want to execute on onPress event.
-    setState(() {
-      var logLine = LogLine(
-          cluster: "cluster1",
-          timestamp: DateTime.now().microsecondsSinceEpoch,
-          namespace: "namespace",
-          pod: "pod",
-          ip: "0.0.0.0",
-          port: 27001,
-          level: "debug",
-          line: msg);
-      lines.add(logLine);
-      if (lines.length > maxLinesInMem) {
-        lines.removeFirst();
-      }
-      // channel.sink.add('received!');
-    });
-    _scrollController.animateTo(
-      0.0,
-      curve: Curves.easeOut,
-      duration: const Duration(milliseconds: 300),
-    );
+  testSession() {
+    debugPrint('Sessions test');
+    LogSession logSession = LogSession(_authService.uid, 'Default', [
+      LogCluster('q0faItIC4nZHbyoWEY3i', 'moshe mac', [
+        LogNamespace('emitters', [
+          LogPod('pod_emitter', [LogContainer('container_emitter')])
+        ])
+      ])
+    ]);
+    SessionService sessionService = SessionService();
+    sessionService.createUserSession(logSession);
+    //setState(() {});
   }
 
-  structure() {
+  structure(Cluster cluster) {
     socket.emit('structure', json.encode({'subject': 'structure'}));
   }
 
@@ -176,8 +195,11 @@ class HomeState extends State<Home> {
   }
 
   addListener() {
-    var listener =
-        SelectedListener(namespace: namespace, pod: pod, container: container);
+    var listener = SelectedListener(
+        cluster: cluster.name,
+        namespace: namespace,
+        pod: pod,
+        container: container);
     if (listens.contains(listener)) {
       debugPrint('listener already exist');
     } else {
@@ -190,20 +212,35 @@ class HomeState extends State<Home> {
   }
 
   removeListener() {
-    var listener =
-        SelectedListener(namespace: namespace, pod: pod, container: container);
+    var listener = SelectedListener(
+        cluster: cluster.name,
+        namespace: namespace,
+        pod: pod,
+        container: container);
     if (!listens.contains(listener)) {
       debugPrint('listener not exist');
     } else {
       debugPrint('removeListener - ' +
-          json.encode({'subject': 'listen', 'listener': listener}));
+          json.encode({'subject': 'stop', 'listener': listener}));
       listens.removeSelectedListener(listener);
-      socket.emit('structure',
-          json.encode({'subject': 'remove', 'listener': listener}));
+      socket.emit(
+          'structure', json.encode({'subject': 'stop', 'listener': listener}));
     }
   }
 
   final ScrollController _scrollController = ScrollController();
+
+  clusterSelected(String? value) {
+    debugPrint('clusterSelected: ' + value!);
+    setState(() {
+      cluster = clusters.firstWhere((cluster) => cluster.name == value);
+      debugPrint('cluster name Selected: ' + cluster.name);
+      structure(cluster);
+      namespace = "";
+      pod = "";
+      container = "";
+    });
+  }
 
   namespaceSelected(String? value) {
     debugPrint('namespaceSelected: ' + value!);
@@ -227,6 +264,49 @@ class HomeState extends State<Home> {
     setState(() {
       container = value;
     });
+  }
+
+  Widget clustersDropdown(
+      BuildContext context, Function(String?) clusterSelected) {
+    var clustersDropdown = DropdownButton<String>(
+      items: clusters.map<DropdownMenuItem<String>>((Cluster cluster) {
+        return DropdownMenuItem<String>(
+          value: cluster.name,
+          child: Text(cluster.name),
+        );
+      }).toList(),
+      onChanged: (_value) => clusterSelected(_value),
+      icon: const Icon(Icons.arrow_drop_down),
+      elevation: 16,
+      style: const TextStyle(color: Colors.brown),
+      underline: Container(
+        height: 2,
+        color: Colors.brown[50],
+      ),
+      hint: const Text("Select Cluster"),
+    );
+
+    if (cluster.name != "") {
+      clustersDropdown = DropdownButton<String>(
+        items: clusters.map<DropdownMenuItem<String>>((Cluster cluster) {
+          return DropdownMenuItem<String>(
+            value: cluster.name,
+            child: Text(cluster.name),
+          );
+        }).toList(),
+        onChanged: (_value) => clusterSelected(_value),
+        value: cluster.name,
+        icon: const Icon(Icons.arrow_drop_down),
+        elevation: 16,
+        style: const TextStyle(color: Colors.brown),
+        underline: Container(
+          height: 2,
+          color: Colors.brown[50],
+        ),
+        hint: const Text("Select Cluster"),
+      );
+    }
+    return clustersDropdown;
   }
 
   Widget namespacesDropdown(
@@ -449,6 +529,7 @@ class HomeState extends State<Home> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
+                        clustersDropdown(context, clusterSelected),
                         namespacesDropdown(context, namespaceSelected),
                         podsDropdown(context, podSelected),
                         containerssDropdown(context, containerSelected),
@@ -501,12 +582,12 @@ class HomeState extends State<Home> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         ElevatedButton(
-                          child: const Text(" Add Log Line "),
-                          onPressed: generateAndAddLine,
+                          child: const Text("Session"),
+                          onPressed: testSession,
                         ),
                         ElevatedButton(
                           child: const Text(" Structure "),
-                          onPressed: structure,
+                          onPressed: () {},
                         ),
                         ElevatedButton(
                           child: const Text(" Message "),

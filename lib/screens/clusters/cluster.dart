@@ -5,7 +5,7 @@ class Cluster {
   String domain = "";
   String name = "";
   int port = 0;
-  String secrete = "";
+  String secret = "";
 
   Cluster();
 }
