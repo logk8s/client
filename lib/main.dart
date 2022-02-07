@@ -1,9 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:logk8s/models/logk8s_user.dart';
+import 'package:logk8s/screens/init.dart';
 import 'package:logk8s/screens/clusters/clusters.dart';
 import 'package:logk8s/screens/error/error.dart';
-import 'package:logk8s/screens/home/init.dart';
 import 'package:logk8s/screens/settings/preferences/prefrences.dart';
 import 'package:logk8s/screens/wrapper.dart';
 import 'package:logk8s/services/auth.dart';

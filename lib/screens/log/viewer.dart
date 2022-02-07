@@ -17,14 +17,14 @@ const maxLinesInMem = 100;
 const msg =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum";
 
-class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+class LogsViewer extends StatefulWidget {
+  const LogsViewer({Key? key}) : super(key: key);
 
   @override
-  HomeState createState() => HomeState();
+  LogsViewerState createState() => LogsViewerState();
 }
 
-class HomeState extends State<Home> {
+class LogsViewerState extends State<LogsViewer> {
   Queue<LogLine> lines = Queue<LogLine>();
   final AuthService _authService = AuthService();
   late final Socket socket;
@@ -36,15 +36,20 @@ class HomeState extends State<Home> {
   List<String> selectedNamespases = [];
   Map<String, List<String>> namespace2pods = {};
   Map<String, List<String>> pod2Containers = {};
-  SelectedListeners listens = SelectedListeners();
+  SelectedListeners listeners = SelectedListeners();
   Cluster cluster = Cluster();
   List<Cluster> clusters = [];
   SessionService sessionService = SessionService();
+  List<LogSession> logSessions = [];
 
-  HomeState() {
-    //socket.io.options['extraHeaders'] = {'Authorization': "Bearer authorization_token_here"};
+  LogsViewerState() {
+    fetchUserState();
+  }
+
+  connectClusterSocket(Cluster cluster) {
+    String wsURL = 'ws://' + cluster.domain + ':' + cluster.port.toString();
     socket = io(
-        'ws://localhost:3000',
+        wsURL, //'ws://localhost:3000',
         OptionBuilder()
             .setExtraHeaders({'Authorization': _authService.userId}).build());
 
@@ -57,7 +62,6 @@ class HomeState extends State<Home> {
     socket.on('connect', (data) {
       debugPrint('connect');
       setState(() {
-        resetState();
       });
     });
 
@@ -70,6 +74,8 @@ class HomeState extends State<Home> {
 
     socket.on('connected', (data) {
       debugPrint('connected as ' + data);
+      structure(cluster);
+      fetchSessions();
     });
 
     socket.on('structure', (data) {
@@ -100,11 +106,9 @@ class HomeState extends State<Home> {
         });
       });
     });
-    fetchClusters();
-    fetchSessions();
   }
 
-  fetchClusters() async {
+  fetchUserState() async {
     var uid = FirebaseAuth.instance.currentUser?.uid;
     CollectionReference clustersCollection =
         FirebaseFirestore.instance.collection('clusters');
@@ -127,12 +131,38 @@ class HomeState extends State<Home> {
                 });
               })
             });
+    if (clusters.isNotEmpty) {
+      setState(() {
+        cluster = clusters.first;
+        connectClusterSocket(cluster);
+      });
+    }
   }
 
   fetchSessions() async {
-    List<LogSession> logSessions = await sessionService.getUserSessions();
-    for(var session in logSessions) {
-      debugPrint(session.name);
+    logSessions = await sessionService.getUserSessions();
+    for (final logSession in logSessions) {
+      LogSession ls = logSession;
+      if (ls.clusters.isNotEmpty) {
+        var logCluster = ls.clusters.first;
+        Cluster cluster = clusters.first;
+        if (cluster.name == logCluster.name) {
+          for (var ns in logCluster.namespaces) {
+            for (var pd in ns.pods) {
+              for (var ct in pd.containers) {
+                var sl = SelectedListener(
+                    cluster: cluster.name,
+                    namespace: ns.name,
+                    pod: pd.name,
+                    container: ct.name);
+                listeners.addSelectedListener(sl);
+                //debugPrint('addListener - ' + json.encode({'subject': 'listen', 'listener': sl}));
+                socket.emit('structure', json.encode({'subject': 'listen', 'listener': sl}));
+              }
+            }
+          }
+        }
+      }
     }
   }
 
@@ -144,14 +174,13 @@ class HomeState extends State<Home> {
     selectedNamespases = [];
     namespace2pods = {};
     pod2Containers = {};
-    listens = SelectedListeners();
+    //listeners = SelectedListeners();
     cluster = Cluster();
-    clusters = [];
+    //clusters = [];
   }
 
   @override
   void dispose() {
-    // channel.sink.close();
     super.dispose();
   }
 
@@ -194,20 +223,43 @@ class HomeState extends State<Home> {
     socket.emit('message', 'test');
   }
 
-  addListener() {
+  addListener() async {
+    final uid = _authService.uid;
     var listener = SelectedListener(
         cluster: cluster.name,
         namespace: namespace,
         pod: pod,
         container: container);
-    if (listens.contains(listener)) {
+    if (listeners.contains(listener)) {
       debugPrint('listener already exist');
     } else {
       debugPrint('addListener - ' +
           json.encode({'subject': 'listen', 'listener': listener}));
-      listens.addSelectedListener(listener);
+      listeners.addSelectedListener(listener);
       socket.emit('structure',
           json.encode({'subject': 'listen', 'listener': listener}));
+
+      if (logSessions.isEmpty) {
+        List<LogContainer> logContainer = [LogContainer(container)];
+        List<LogPod> logPods = [LogPod(pod, logContainer)];
+        List<LogNamespace> logNamespace = [LogNamespace(namespace, logPods)];
+        List<LogCluster> logClusters = [
+          LogCluster(cluster.docid, cluster.name, logNamespace)
+        ];
+        sessionService
+            .createUserSession(LogSession(uid, 'default', logClusters));
+      } else {
+        List<LogSession> sessions = await sessionService.getUserSessions();
+        if (sessions.length > 1) {
+          debugPrint('sessions.length > 1');
+        } else {
+          LogSession logSession = sessions.first;
+          bool changed = logSession.add(cluster, namespace, pod, container);
+          if (changed) {
+            sessionService.updateUserSession(logSession);
+          }
+        }
+      }
     }
   }
 
@@ -217,12 +269,12 @@ class HomeState extends State<Home> {
         namespace: namespace,
         pod: pod,
         container: container);
-    if (!listens.contains(listener)) {
+    if (!listeners.contains(listener)) {
       debugPrint('listener not exist');
     } else {
       debugPrint('removeListener - ' +
           json.encode({'subject': 'stop', 'listener': listener}));
-      listens.removeSelectedListener(listener);
+      listeners.removeSelectedListener(listener);
       socket.emit(
           'structure', json.encode({'subject': 'stop', 'listener': listener}));
     }
@@ -232,14 +284,14 @@ class HomeState extends State<Home> {
 
   clusterSelected(String? value) {
     debugPrint('clusterSelected: ' + value!);
-    setState(() {
-      cluster = clusters.firstWhere((cluster) => cluster.name == value);
-      debugPrint('cluster name Selected: ' + cluster.name);
-      structure(cluster);
-      namespace = "";
-      pod = "";
-      container = "";
-    });
+    // setState(() {
+    //   cluster = clusters.firstWhere((cluster) => cluster.name == value);
+    //   debugPrint('cluster name Selected: ' + cluster.name);
+    //   structure(cluster);
+    //   namespace = "";
+    //   pod = "";
+    //   container = "";
+    // });
   }
 
   namespaceSelected(String? value) {
@@ -490,7 +542,8 @@ class HomeState extends State<Home> {
               child: IconButton(
                 onPressed: () async {
                   //see https://docs.flutter.dev/cookbook/navigation/named-routes
-                  Navigator.pushNamed(context, '/clusters');
+                  var res = await Navigator.pushNamed(context, '/clusters');
+                  debugPrint('Im back ' + res.toString());
                 },
                 icon: const Icon(Icons.settings),
                 tooltip: 'Prefrences',

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:logk8s/services/database.dart';
+import 'package:provider/provider.dart';
 
 class Clusters extends StatefulWidget {
   const Clusters({Key? key}) : super(key: key);
