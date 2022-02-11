@@ -56,6 +56,7 @@ dependencies:
   web_socket_channel: ^2.1.0
   multiselect: ^0.0.4
   graphview: ^1.1.1
+  hexagon: ^0.2.0-nullsafety.1
 
 dev_dependencies:
   flutter_test:

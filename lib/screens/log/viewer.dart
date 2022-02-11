@@ -10,7 +10,7 @@ import 'package:logk8s/models/selected_listener.dart';
 import 'package:logk8s/models/selected_listeners.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
-import 'package:logk8s/services/session.dart';
+import 'package:logk8s/services/structures.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 const maxLinesInMem = 100;
@@ -40,7 +40,8 @@ class LogsViewerState extends State<LogsViewer> {
   Cluster cluster = Cluster();
   List<Cluster> clusters = [];
   SessionService sessionService = SessionService();
-  List<LogSession> logSessions = [];
+  List<Structure> clusterLogSessions = [];
+  Structures structures = Structures.empty();
 
   LogsViewerState() {
     fetchUserState();
@@ -61,8 +62,7 @@ class LogsViewerState extends State<LogsViewer> {
 
     socket.on('connect', (data) {
       debugPrint('connect');
-      setState(() {
-      });
+      setState(() {});
     });
 
     socket.on("disconnect", (reason) {
@@ -104,6 +104,7 @@ class LogsViewerState extends State<LogsViewer> {
             pod2Containers[pod]!.add(containerName);
           });
         });
+        structures = Structures(cluster.name, namespaces, namespace2pods, pod2Containers);
       });
     });
   }
@@ -140,9 +141,9 @@ class LogsViewerState extends State<LogsViewer> {
   }
 
   fetchSessions() async {
-    logSessions = await sessionService.getUserSessions();
-    for (final logSession in logSessions) {
-      LogSession ls = logSession;
+    clusterLogSessions = await sessionService.getUserSessions();
+    for (final logSession in clusterLogSessions) {
+      Structure ls = logSession;
       if (ls.clusters.isNotEmpty) {
         var logCluster = ls.clusters.first;
         Cluster cluster = clusters.first;
@@ -157,7 +158,8 @@ class LogsViewerState extends State<LogsViewer> {
                     container: ct.name);
                 listeners.addSelectedListener(sl);
                 //debugPrint('addListener - ' + json.encode({'subject': 'listen', 'listener': sl}));
-                socket.emit('structure', json.encode({'subject': 'listen', 'listener': sl}));
+                socket.emit('structure',
+                    json.encode({'subject': 'listen', 'listener': sl}));
               }
             }
           }
@@ -203,10 +205,10 @@ class LogsViewerState extends State<LogsViewer> {
 
   testSession() {
     debugPrint('Sessions test');
-    LogSession logSession = LogSession(_authService.uid, 'Default', [
-      LogCluster('q0faItIC4nZHbyoWEY3i', 'moshe mac', [
-        LogNamespace('emitters', [
-          LogPod('pod_emitter', [LogContainer('container_emitter')])
+    Structure logSession = Structure(_authService.uid, 'Default', [
+      ClusterData('q0faItIC4nZHbyoWEY3i', 'moshe mac', [
+        NamespaceData('emitters', [
+          PodData('pod_emitter', [ContainerData('container_emitter')])
         ])
       ])
     ]);
@@ -239,21 +241,21 @@ class LogsViewerState extends State<LogsViewer> {
       socket.emit('structure',
           json.encode({'subject': 'listen', 'listener': listener}));
 
-      if (logSessions.isEmpty) {
-        List<LogContainer> logContainer = [LogContainer(container)];
-        List<LogPod> logPods = [LogPod(pod, logContainer)];
-        List<LogNamespace> logNamespace = [LogNamespace(namespace, logPods)];
-        List<LogCluster> logClusters = [
-          LogCluster(cluster.docid, cluster.name, logNamespace)
+      if (clusterLogSessions.isEmpty) {
+        List<ContainerData> logContainer = [ContainerData(container)];
+        List<PodData> logPods = [PodData(pod, logContainer)];
+        List<NamespaceData> logNamespace = [NamespaceData(namespace, logPods)];
+        List<ClusterData> logClusters = [
+          ClusterData(cluster.docid, cluster.name, logNamespace)
         ];
         sessionService
-            .createUserSession(LogSession(uid, 'default', logClusters));
+            .createUserSession(Structure(uid, 'default', logClusters));
       } else {
-        List<LogSession> sessions = await sessionService.getUserSessions();
+        List<Structure> sessions = await sessionService.getUserSessions();
         if (sessions.length > 1) {
           debugPrint('sessions.length > 1');
         } else {
-          LogSession logSession = sessions.first;
+          Structure logSession = sessions.first;
           bool changed = logSession.add(cluster, namespace, pod, container);
           if (changed) {
             sessionService.updateUserSession(logSession);
@@ -639,8 +641,11 @@ class LogsViewerState extends State<LogsViewer> {
                           onPressed: testSession,
                         ),
                         ElevatedButton(
-                          child: const Text(" Structure "),
-                          onPressed: () {},
+                          child: const Text("Structure"),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/structures',
+                                arguments: structures);
+                          },
                         ),
                         ElevatedButton(
                           child: const Text(" Message "),

@@ -2,19 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
 
-class LogCluster {
+class ClusterData {
   String name;
   String cid;
-  late List<LogNamespace> namespaces;
+  late List<NamespaceData> namespaces;
 
-  LogCluster(this.cid, this.name, this.namespaces);
-  LogCluster.empty(this.cid, this.name) {
+  ClusterData(this.cid, this.name, this.namespaces);
+  ClusterData.empty(this.cid, this.name) {
     namespaces = [];
   }
 
-  LogNamespace getNamespace(String name) {
+  NamespaceData getNamespace(String name) {
     return namespaces.firstWhere((cluster) => cluster.name == name,
-        orElse: () => LogNamespace("", []));
+        orElse: () => NamespaceData("", []));
   }
 
   Map<String, dynamic> toMap() {
@@ -27,18 +27,18 @@ class LogCluster {
     };
   }
 
-  LogCluster.fromMap(Map<dynamic, dynamic> map)
+  ClusterData.fromMap(Map<dynamic, dynamic> map)
       : name = map['name'],
         cid = map['cid'],
-        namespaces = map['namespaces'].map<LogNamespace>((namespace) {
-          return LogNamespace.fromMap(namespace);
+        namespaces = map['namespaces'].map<NamespaceData>((namespace) {
+          return NamespaceData.fromMap(namespace);
         }).toList();
 
   bool add(String namespace, String pod, String container) {
     bool changed = false;
-    LogNamespace logNamespace = getNamespace(namespace);
+    NamespaceData logNamespace = getNamespace(namespace);
     if (namespace != logNamespace.name) {
-      logNamespace = LogNamespace.empty(namespace);
+      logNamespace = NamespaceData.empty(namespace);
       namespaces.add(logNamespace);
       changed = true;
     }
@@ -46,18 +46,18 @@ class LogCluster {
   }
 }
 
-class LogNamespace {
+class NamespaceData {
   String name;
-  late List<LogPod> pods;
+  late List<PodData> pods;
 
-  LogNamespace(this.name, this.pods);
-  LogNamespace.empty(this.name) {
+  NamespaceData(this.name, this.pods);
+  NamespaceData.empty(this.name) {
     pods = [];
   }
 
-  LogPod getPod(String name) {
+  PodData getPod(String name) {
     return pods.firstWhere((cluster) => cluster.name == name,
-        orElse: () => LogPod("", []));
+        orElse: () => PodData("", []));
   }
 
   Map<String, dynamic> toMap() {
@@ -69,17 +69,17 @@ class LogNamespace {
     };
   }
 
-  LogNamespace.fromMap(Map<dynamic, dynamic> map)
+  NamespaceData.fromMap(Map<dynamic, dynamic> map)
       : name = map['name'],
-        pods = map['pods'].map<LogPod>((pod) {
-          return LogPod.fromMap(pod);
+        pods = map['pods'].map<PodData>((pod) {
+          return PodData.fromMap(pod);
         }).toList();
 
   bool add(String pod, String container) {
     bool changed = false;
-    LogPod logPod = getPod(pod);
+    PodData logPod = getPod(pod);
     if (pod != logPod.name) {
-      logPod = LogPod.empty(pod);
+      logPod = PodData.empty(pod);
       pods.add(logPod);
       changed = true;
     }
@@ -87,18 +87,18 @@ class LogNamespace {
   }
 }
 
-class LogPod {
+class PodData {
   String name;
-  late List<LogContainer> containers;
+  late List<ContainerData> containers;
 
-  LogPod(this.name, this.containers);
-  LogPod.empty(this.name) {
+  PodData(this.name, this.containers);
+  PodData.empty(this.name) {
     containers = [];
   }
 
-  LogContainer getContainer(String name) {
+  ContainerData getContainer(String name) {
     return containers.firstWhere((cluster) => cluster.name == name,
-        orElse: () => LogContainer(""));
+        orElse: () => ContainerData(""));
   }
 
   Map<String, dynamic> toMap() {
@@ -110,17 +110,17 @@ class LogPod {
     };
   }
 
-  LogPod.fromMap(Map<dynamic, dynamic> map)
+  PodData.fromMap(Map<dynamic, dynamic> map)
       : name = map['name'],
-        containers = map['containers'].map<LogContainer>((c) {
-          final lc = LogContainer.fromMap(c);
+        containers = map['containers'].map<ContainerData>((c) {
+          final lc = ContainerData.fromMap(c);
           return lc;
         }).toList();
 
   bool add(String container) {
-    LogContainer logContainer = getContainer(container);
+    ContainerData logContainer = getContainer(container);
     if (container != logContainer.name) {
-      logContainer = LogContainer(container);
+      logContainer = ContainerData(container);
       containers.add(logContainer);
       return true;
     }
@@ -128,29 +128,29 @@ class LogPod {
   }
 }
 
-class LogContainer {
+class ContainerData {
   String name;
 
-  LogContainer(this.name);
+  ContainerData(this.name);
 
   Map<String, dynamic> toMap() {
     return {'name': name};
   }
 
-  LogContainer.fromMap(Map<dynamic, dynamic> map) : name = map['name'];
+  ContainerData.fromMap(Map<dynamic, dynamic> map) : name = map['name'];
 }
 
-class LogSession {
+class Structure {
   String uid;
   String name;
   String docid = "";
-  List<LogCluster> clusters;
+  List<ClusterData> clusters;
 
-  LogSession(this.uid, this.name, this.clusters);
+  Structure(this.uid, this.name, this.clusters);
 
-  LogCluster getCluster(String name) {
+  ClusterData getCluster(String name) {
     return clusters.firstWhere((cluster) => cluster.name == name,
-        orElse: () => LogCluster("", "", []));
+        orElse: () => ClusterData("", "", []));
   }
 
   Map<String, dynamic> toMap() {
@@ -163,22 +163,35 @@ class LogSession {
     };
   }
 
-  LogSession.fromMap(Map<dynamic, dynamic> map)
+  Structure.fromMap(Map<dynamic, dynamic> map)
       : name = map['name'],
         uid = map['uid'],
-        clusters = map['clusters'].map<LogCluster>((cluster) {
-          return LogCluster.fromMap(cluster);
+        clusters = map['clusters'].map<ClusterData>((cluster) {
+          return ClusterData.fromMap(cluster);
         }).toList();
 
   bool add(Cluster cluster, String namespace, String pod, String container) {
     bool changed = false;
-    LogCluster logCluster = getCluster(cluster.name);
+    ClusterData logCluster = getCluster(cluster.name);
     if (cluster.name != logCluster.name) {
-      logCluster = LogCluster.empty(cluster.name, cluster.docid);
+      logCluster = ClusterData.empty(cluster.name, cluster.docid);
       clusters.add(logCluster);
       changed = true;
     }
     return logCluster.add(namespace, pod, container) || changed;
+  }
+}
+
+class Structures {
+  String cluster;
+  List<String> namespaces;
+  Map<String, List<String>> namespace2pods;
+  Map<String, List<String>> pod2containers;
+
+  Structures(final this.cluster, final this.namespaces, final this.namespace2pods, final this.pod2containers);
+
+  static Structures empty() {
+    return Structures('', [], {}, {});
   }
 }
 
@@ -193,20 +206,20 @@ class SessionService {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference get sessions => firestore.collection('sessions');
 
-  Future createUserSession(LogSession session) async {
+  Future createUserSession(Structure session) async {
     return await sessions.add(session.toMap());
   }
 
-  Future updateUserSession(LogSession session) async {
+  Future updateUserSession(Structure session) async {
     return await sessions.doc(session.docid).update(session.toMap());
   }
 
-  Future<List<LogSession>> getUserSessions() async {
+  Future<List<Structure>> getUserSessions() async {
     return sessions.where('uid', isEqualTo: uid).get().then((value) {
-      List<LogSession> userSessions = [];
+      List<Structure> userSessions = [];
       for (final document in value.docs) {
         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-        var s = LogSession.fromMap(data);
+        var s = Structure.fromMap(data);
         userSessions.add(s);
       }
       return userSessions;

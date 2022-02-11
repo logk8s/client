@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:logk8s/services/auth.dart';
 
-class Prefrences extends StatefulWidget {
-  const Prefrences({Key? key}) : super(key: key);
+class Template extends StatefulWidget {
+  const Template({Key? key}) : super(key: key);
 
   @override
-  PrefrencesState createState() => PrefrencesState();
+  TemplateState createState() => TemplateState();
 }
 
-class PrefrencesState extends State<Prefrences> {
+class TemplateState extends State<Template> {
   final AuthService _authService = AuthService();
 
-  PrefrencesState() {}
+  TemplateState() {}
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +19,7 @@ class PrefrencesState extends State<Prefrences> {
     return Scaffold(
         backgroundColor: Colors.brown[50],
         appBar: AppBar(
-          title: const Text('Prefrences'),
+          title: const Text('Template'),
           backgroundColor: Colors.brown[400],
           elevation: 0.0,
           actions: <Widget>[
