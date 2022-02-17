@@ -199,7 +199,6 @@ class LogsViewerState extends State<LogsViewer> {
       curve: Curves.easeOut,
       duration: const Duration(milliseconds: 300),
     );
-    //TODO: Send acknowllegment
     //socket.emit('acknoledge', logLine.timestamp);
   }
 
@@ -651,7 +650,7 @@ class LogsViewerState extends State<LogsViewer> {
                           child: const Text(" Message "),
                           onPressed: testMessage,
                         ),
-                        //TODO: #1 Multiselect, use multi_select_flutter or DropDownMultiSelect
+                        //Check: #1 Multiselect, use multi_select_flutter or DropDownMultiSelect
 
                         // SizedBox(
                         //   height: 50.0,

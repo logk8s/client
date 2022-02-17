@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:logk8s/services/database.dart';
-import 'package:provider/provider.dart';
 
 class Clusters extends StatefulWidget {
   const Clusters({Key? key}) : super(key: key);
@@ -188,7 +187,7 @@ class ClustersState extends State<Clusters> {
           if (res.type == DocumentChangeType.added) {
             clusters.add(c);
           } else if (res.type == DocumentChangeType.modified) {
-            clusters.forEach((cluster) {
+            for( var cluster in clusters) {
               if (cluster.docid == c.docid) {
                 cluster.uid = c.uid;
                 cluster.domain = c.domain;
@@ -196,7 +195,7 @@ class ClustersState extends State<Clusters> {
                 cluster.port = c.port;
                 cluster.name = c.name;
               }
-            });
+            }
           } else if (res.type == DocumentChangeType.removed) {
             clusters.remove(c);
           }
@@ -531,7 +530,7 @@ class ClustersState extends State<Clusters> {
                     child: Center(
                         child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [],
+                      children: const [],
                     ))),
               )
             ],

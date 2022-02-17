@@ -11,7 +11,7 @@ class Template extends StatefulWidget {
 class TemplateState extends State<Template> {
   final AuthService _authService = AuthService();
 
-  TemplateState() {}
+  TemplateState();
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ class TemplateState extends State<Template> {
                             direction: Axis.horizontal,
                             spacing: 1,
                             runSpacing: 1,
-                            children: []
+                            children: const []
                         )
                     )
                   )),
@@ -99,7 +99,7 @@ class TemplateState extends State<Template> {
                     child: Center(
                         child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [],
+                      children: const [],
                     ))),
               )
             ],

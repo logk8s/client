@@ -411,7 +411,7 @@ class PrefrencesState extends State<Prefrences> {
                     child: Center(
                         child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [],
+                      children: const [],
                     ))),
               )
             ],

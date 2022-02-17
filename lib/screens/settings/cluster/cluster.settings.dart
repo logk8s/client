@@ -11,7 +11,7 @@ class Prefrences extends StatefulWidget {
 class PrefrencesState extends State<Prefrences> {
   final AuthService _authService = AuthService();
 
-  PrefrencesState() {}
+  PrefrencesState();
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ class PrefrencesState extends State<Prefrences> {
                             direction: Axis.horizontal,
                             spacing: 1,
                             runSpacing: 1,
-                            children: []
+                            children: const []
                         )
                     )
                   )),
@@ -99,7 +99,7 @@ class PrefrencesState extends State<Prefrences> {
                     child: Center(
                         child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [],
+                      children: const [],
                     ))),
               )
             ],

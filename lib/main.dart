@@ -9,7 +9,6 @@ import 'package:logk8s/screens/settings/preferences/prefrences.dart';
 import 'package:logk8s/screens/structure/structure-view.dart';
 import 'package:logk8s/screens/wrapper.dart';
 import 'package:logk8s/services/auth.dart';
-import 'package:logk8s/services/structures.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -80,7 +79,7 @@ class _AppState extends State<App> {
                   if (settings.name == StructuresViewPage.routeName) {
                     // Cast the arguments to the correct
                     // type: ScreenArguments.
-                    final args = settings.arguments as Structures;
+                    //final args = settings.arguments as Structures;
 
                     // Then, extract the required data from
                     // the arguments and pass the data to the
