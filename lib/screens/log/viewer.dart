@@ -10,7 +10,7 @@ import 'package:logk8s/models/selected_listener.dart';
 import 'package:logk8s/models/selected_listeners.dart';
 import 'package:logk8s/screens/clusters/cluster.dart';
 import 'package:logk8s/services/auth.dart';
-import 'package:logk8s/services/structures.dart';
+import 'package:logk8s/services/stractures.dart';
 import 'package:socket_io_client/socket_io_client.dart';
 
 const maxLinesInMem = 100;
@@ -28,7 +28,7 @@ class LogsViewerState extends State<LogsViewer> {
   Queue<LogLine> lines = Queue<LogLine>();
   final AuthService _authService = AuthService();
   late final Socket socket;
-  dynamic k8sStructure;
+  dynamic k8sStracture;
   String namespace = "";
   String pod = "";
   String container = "";
@@ -40,8 +40,8 @@ class LogsViewerState extends State<LogsViewer> {
   Cluster cluster = Cluster();
   List<Cluster> clusters = [];
   SessionService sessionService = SessionService();
-  List<Structure> clusterLogSessions = [];
-  Structures structures = Structures.empty();
+  List<Stracture> clusterLogSessions = [];
+  Stractures stractures = Stractures.empty();
 
   LogsViewerState() {
     fetchUserState();
@@ -74,13 +74,13 @@ class LogsViewerState extends State<LogsViewer> {
 
     socket.on('connected', (data) {
       debugPrint('connected as ' + data);
-      structure(cluster);
+      stracture(cluster);
       fetchSessions();
     });
 
-    socket.on('structure', (data) {
+    socket.on('stracture', (data) {
       setState(() {
-        k8sStructure = json.encode(data);
+        k8sStracture = json.encode(data);
         namespaces = [];
         namespace2pods = {};
         pod2Containers = {};
@@ -104,7 +104,7 @@ class LogsViewerState extends State<LogsViewer> {
             pod2Containers[pod]!.add(containerName);
           });
         });
-        structures = Structures(cluster.name, namespaces, namespace2pods, pod2Containers);
+        stractures = Stractures(cluster.name, namespaces, namespace2pods, pod2Containers);
       });
     });
   }
@@ -143,7 +143,7 @@ class LogsViewerState extends State<LogsViewer> {
   fetchSessions() async {
     clusterLogSessions = await sessionService.getUserSessions();
     for (final logSession in clusterLogSessions) {
-      Structure ls = logSession;
+      Stracture ls = logSession;
       if (ls.clusters.isNotEmpty) {
         var logCluster = ls.clusters.first;
         Cluster cluster = clusters.first;
@@ -158,7 +158,7 @@ class LogsViewerState extends State<LogsViewer> {
                     container: ct.name);
                 listeners.addSelectedListener(sl);
                 //debugPrint('addListener - ' + json.encode({'subject': 'listen', 'listener': sl}));
-                socket.emit('structure',
+                socket.emit('stracture',
                     json.encode({'subject': 'listen', 'listener': sl}));
               }
             }
@@ -204,7 +204,7 @@ class LogsViewerState extends State<LogsViewer> {
 
   testSession() {
     debugPrint('Sessions test');
-    Structure logSession = Structure(_authService.uid, 'Default', [
+    Stracture logSession = Stracture(_authService.uid, 'Default', [
       ClusterData('q0faItIC4nZHbyoWEY3i', 'moshe mac', [
         NamespaceData('emitters', [
           PodData('pod_emitter', [ContainerData('container_emitter')])
@@ -216,8 +216,8 @@ class LogsViewerState extends State<LogsViewer> {
     //setState(() {});
   }
 
-  structure(Cluster cluster) {
-    socket.emit('structure', json.encode({'subject': 'structure'}));
+  stracture(Cluster cluster) {
+    socket.emit('stracture', json.encode({'subject': 'stracture'}));
   }
 
   testMessage() {
@@ -237,7 +237,7 @@ class LogsViewerState extends State<LogsViewer> {
       debugPrint('addListener - ' +
           json.encode({'subject': 'listen', 'listener': listener}));
       listeners.addSelectedListener(listener);
-      socket.emit('structure',
+      socket.emit('stracture',
           json.encode({'subject': 'listen', 'listener': listener}));
 
       if (clusterLogSessions.isEmpty) {
@@ -248,13 +248,13 @@ class LogsViewerState extends State<LogsViewer> {
           ClusterData(cluster.docid, cluster.name, logNamespace)
         ];
         sessionService
-            .createUserSession(Structure(uid, 'default', logClusters));
+            .createUserSession(Stracture(uid, 'default', logClusters));
       } else {
-        List<Structure> sessions = await sessionService.getUserSessions();
+        List<Stracture> sessions = await sessionService.getUserSessions();
         if (sessions.length > 1) {
           debugPrint('sessions.length > 1');
         } else {
-          Structure logSession = sessions.first;
+          Stracture logSession = sessions.first;
           bool changed = logSession.add(cluster, namespace, pod, container);
           if (changed) {
             sessionService.updateUserSession(logSession);
@@ -277,7 +277,7 @@ class LogsViewerState extends State<LogsViewer> {
           json.encode({'subject': 'stop', 'listener': listener}));
       listeners.removeSelectedListener(listener);
       socket.emit(
-          'structure', json.encode({'subject': 'stop', 'listener': listener}));
+          'stracture', json.encode({'subject': 'stop', 'listener': listener}));
     }
   }
 
@@ -288,7 +288,7 @@ class LogsViewerState extends State<LogsViewer> {
     // setState(() {
     //   cluster = clusters.firstWhere((cluster) => cluster.name == value);
     //   debugPrint('cluster name Selected: ' + cluster.name);
-    //   structure(cluster);
+    //   stracture(cluster);
     //   namespace = "";
     //   pod = "";
     //   container = "";
@@ -640,10 +640,10 @@ class LogsViewerState extends State<LogsViewer> {
                           onPressed: testSession,
                         ),
                         ElevatedButton(
-                          child: const Text("Structure"),
+                          child: const Text("Stracture"),
                           onPressed: () {
-                            Navigator.pushNamed(context, '/structures',
-                                arguments: structures);
+                            Navigator.pushNamed(context, '/stractures',
+                                arguments: stractures);
                           },
                         ),
                         ElevatedButton(

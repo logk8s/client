@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:graphview/GraphView.dart';
-import 'package:logk8s/services/structures.dart';
+import 'package:logk8s/services/stractures.dart';
 
 // Widget hexWidget(String text) {
 //   return InkWell(
@@ -112,20 +112,20 @@ class TreeNode extends NodeValueKey {
   }
 }
 
-class StructuresPage extends StatefulWidget {
-  const StructuresPage({Key? key}) : super(key: key);
+class StracturesPage extends StatefulWidget {
+  const StracturesPage({Key? key}) : super(key: key);
 
   @override
-  StructuresPageState createState() => StructuresPageState();
+  StracturesPageState createState() => StracturesPageState();
 }
 
-class StructuresPageState extends State<StructuresPage> {
+class StracturesPageState extends State<StracturesPage> {
   final AuthService _authService = AuthService();
   final Graph graph = Graph()..isTree = true;
   BuchheimWalkerConfiguration builder = BuchheimWalkerConfiguration();
-  bool emptyStructures = false;
+  bool emptyStractures = false;
 
-  StructuresPageState();
+  StracturesPageState();
   @override
   void initState() {
     super.initState();
@@ -139,29 +139,29 @@ class StructuresPageState extends State<StructuresPage> {
 
   @override
   Widget build(BuildContext context) {
-    Structures structures = Structures.empty();
+    Stractures stractures = Stractures.empty();
 
-    buildGraph(Structures structures) {
+    buildGraph(Stractures stractures) {
       //final rootNode = Node.Id(NodeValueKey(NodeType.root, 'All Clusters'));
       final clusterNode =
-          Node.Id(NodeValueKey(NodeType.cluster, structures.cluster));
+          Node.Id(NodeValueKey(NodeType.cluster, stractures.cluster));
 
-      var nns = structures.namespaces.length;
+      var nns = stractures.namespaces.length;
       debugPrint('namespace length is $nns');
 
       //Namespaces
-      for (var namespace in structures.namespaces) {
+      for (var namespace in stractures.namespaces) {
         var nsNode = Node.Id(NodeValueKey(NodeType.namespace, namespace));
         graph.addEdge(clusterNode, nsNode,
             paint: Paint()..color = Colors.brown.shade700);
 
         //pods
-        for (var pod in structures.namespace2pods[namespace] ?? []) {
+        for (var pod in stractures.namespace2pods[namespace] ?? []) {
           var podNode = Node.Id(NodeValueKey(NodeType.pod, pod));
           graph.addEdge(nsNode, podNode,
               paint: Paint()..color = Colors.brown.shade800);
           //container
-          for (var container in structures.pod2containers[pod] ?? []) {
+          for (var container in stractures.pod2containers[pod] ?? []) {
             var containerNode =
                 Node.Id(NodeValueKey(NodeType.container, container));
             graph.addEdge(podNode, containerNode,
@@ -172,11 +172,11 @@ class StructuresPageState extends State<StructuresPage> {
     }
 
     setState(() {
-      structures = ModalRoute.of(context)!.settings.arguments as Structures;
-      if (structures.cluster == "") {
-        emptyStructures = true;
+      stractures = ModalRoute.of(context)!.settings.arguments as Stractures;
+      if (stractures.cluster == "") {
+        emptyStractures = true;
       }else{
-        buildGraph(structures);
+        buildGraph(stractures);
       }
 
 
@@ -185,7 +185,7 @@ class StructuresPageState extends State<StructuresPage> {
     return Scaffold(
         backgroundColor: Colors.brown[50],
         appBar: AppBar(
-          title: const Text('Clusters structure'),
+          title: const Text('Clusters stracture'),
           backgroundColor: Colors.brown[400],
           elevation: 0.0,
           actions: <Widget>[
@@ -221,7 +221,7 @@ class StructuresPageState extends State<StructuresPage> {
                             //iconSize: 36,
                             color: Colors.brown[400],
                             icon: const Icon(Icons.refresh),
-                            tooltip: "Refresh Structure",
+                            tooltip: "Refresh Stracture",
                             onPressed: () {},
                           ),
                         ],

@@ -3,21 +3,21 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import 'package:hexagon/hexagon.dart';
-import 'package:logk8s/services/structures.dart';
+import 'package:logk8s/services/stractures.dart';
 
-class StructuresViewPage extends StatefulWidget {
+class StracturesViewPage extends StatefulWidget {
   static const routeName = '/graph';
-  Structures structures = Structures.empty();
+  Stractures stractures = Stractures.empty();
 
   @override
-  _StructuresViewPageState createState() => _StructuresViewPageState();
+  _StracturesViewPageState createState() => _StracturesViewPageState();
 }
 
-class _StructuresViewPageState extends State<StructuresViewPage> {
+class _StracturesViewPageState extends State<StracturesViewPage> {
   @override
   Widget build(BuildContext context) {
     setState(() {
-      widget.structures = ModalRoute.of(context)!.settings.arguments as Structures;
+      widget.stractures = ModalRoute.of(context)!.settings.arguments as Stractures;
     });
 
     return Scaffold(

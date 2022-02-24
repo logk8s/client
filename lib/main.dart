@@ -1,12 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:logk8s/models/logk8s_user.dart';
-import 'package:logk8s/screens/clusters/structure-graph-test.dart';
+import 'package:logk8s/screens/clusters/stracture-graph-test.dart';
 import 'package:logk8s/screens/init.dart';
 import 'package:logk8s/screens/clusters/clusters.dart';
 import 'package:logk8s/screens/error/error.dart';
 import 'package:logk8s/screens/settings/preferences/prefrences.dart';
-import 'package:logk8s/screens/structure/structure-view.dart';
+import 'package:logk8s/screens/stracture/stracture-view.dart';
 import 'package:logk8s/screens/wrapper.dart';
 import 'package:logk8s/services/auth.dart';
 import 'package:provider/provider.dart';
@@ -71,22 +71,22 @@ class _AppState extends State<App> {
                   '/': (context) => Wrapper(),
                   '/prefrences': (context) => const Prefrences(),
                   '/clusters': (context) => const Clusters(),
-                  '/graph': (context) => StructuresViewPage(),
-                  '/structures': (context) => const StructuresPage(),
+                  '/graph': (context) => StracturesViewPage(),
+                  '/stractures': (context) => const StracturesPage(),
                 },
                 onGenerateRoute: (settings) {
                   // If you push the PassArguments route
-                  if (settings.name == StructuresViewPage.routeName) {
+                  if (settings.name == StracturesViewPage.routeName) {
                     // Cast the arguments to the correct
                     // type: ScreenArguments.
-                    //final args = settings.arguments as Structures;
+                    //final args = settings.arguments as Stractures;
 
                     // Then, extract the required data from
                     // the arguments and pass the data to the
                     // correct screen.
                     return MaterialPageRoute(
                       builder: (context) {
-                        return StructuresViewPage();//args);
+                        return StracturesViewPage();//args);
                       },
                     );
                   }

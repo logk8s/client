@@ -140,13 +140,13 @@ class ContainerData {
   ContainerData.fromMap(Map<dynamic, dynamic> map) : name = map['name'];
 }
 
-class Structure {
+class Stracture {
   String uid;
   String name;
   String docid = "";
   List<ClusterData> clusters;
 
-  Structure(this.uid, this.name, this.clusters);
+  Stracture(this.uid, this.name, this.clusters);
 
   ClusterData getCluster(String name) {
     return clusters.firstWhere((cluster) => cluster.name == name,
@@ -163,7 +163,7 @@ class Structure {
     };
   }
 
-  Structure.fromMap(Map<dynamic, dynamic> map)
+  Stracture.fromMap(Map<dynamic, dynamic> map)
       : name = map['name'],
         uid = map['uid'],
         clusters = map['clusters'].map<ClusterData>((cluster) {
@@ -182,16 +182,16 @@ class Structure {
   }
 }
 
-class Structures {
+class Stractures {
   String cluster;
   List<String> namespaces;
   Map<String, List<String>> namespace2pods;
   Map<String, List<String>> pod2containers;
 
-  Structures(final this.cluster, final this.namespaces, final this.namespace2pods, final this.pod2containers);
+  Stractures(final this.cluster, final this.namespaces, final this.namespace2pods, final this.pod2containers);
 
-  static Structures empty() {
-    return Structures('', [], {}, {});
+  static Stractures empty() {
+    return Stractures('', [], {}, {});
   }
 }
 
@@ -206,20 +206,20 @@ class SessionService {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   CollectionReference get sessions => firestore.collection('sessions');
 
-  Future createUserSession(Structure session) async {
+  Future createUserSession(Stracture session) async {
     return await sessions.add(session.toMap());
   }
 
-  Future updateUserSession(Structure session) async {
+  Future updateUserSession(Stracture session) async {
     return await sessions.doc(session.docid).update(session.toMap());
   }
 
-  Future<List<Structure>> getUserSessions() async {
+  Future<List<Stracture>> getUserSessions() async {
     return sessions.where('uid', isEqualTo: uid).get().then((value) {
-      List<Structure> userSessions = [];
+      List<Stracture> userSessions = [];
       for (final document in value.docs) {
         Map<String, dynamic> data = document.data() as Map<String, dynamic>;
-        var s = Structure.fromMap(data);
+        var s = Stracture.fromMap(data);
         userSessions.add(s);
       }
       return userSessions;
