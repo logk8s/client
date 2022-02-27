@@ -102,12 +102,12 @@ class _SignInState extends State<SignIn> {
                               });
                               var result =
                                   await _authService.signIn(email, password);
-                              if (result == null) {
-                                setState(() {
+                              setState(() {
+                                if (result == null) {
                                   error = 'Failed to sign in';
-                                  loading = false;
-                                });
-                              }
+                                }
+                                loading = false;
+                              });
                             }
                           },
                           child: const Text('Sign in'),
